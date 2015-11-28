@@ -1,4 +1,4 @@
-package ninja.theopensource.compiler;
+package ninja.theopensource.cminuscompiler;
 /* 
  * Author: Bob Broeg 
  * Created: Tuesday, April 20, 2004 9:13:23 AM 

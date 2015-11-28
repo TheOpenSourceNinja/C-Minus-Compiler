@@ -1,4 +1,4 @@
-package ninja.theopensource.compiler;
+package ninja.theopensource.cminuscompiler;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,6 +21,9 @@ public class Scanner implements Constants {
 			result = new Token( NUMBER, tokenString );
 		} else {
 			switch( tokenString ) {
+				case "": {
+					break;
+				}
 				case "else": {
 					result = new Token( ELSE, tokenString );
 					break;
@@ -125,6 +128,14 @@ public class Scanner implements Constants {
 					result = new Token( STOP_COMMENT, tokenString );
 					break;
 				}
+				case "read": {
+					result = new Token( READ, tokenString );
+					break;
+				}
+				case "write": {
+					result = new Token( WRITE, tokenString );
+					break;
+				}
 				default: {
 					System.out.println( "Default case reached" );
 					result = new Token( ID, tokenString );
@@ -158,6 +169,9 @@ public class Scanner implements Constants {
 		
 		tokens = new ArrayList< ArrayList< Token > >();
 		Iterator<String> it = fileLines.iterator();
+		
+		boolean ignoreComment = false;
+		
 		while( it.hasNext() ) {
 			String line = it.next();
 			ArrayList< Token > newList = new ArrayList< Token >();
@@ -170,29 +184,98 @@ public class Scanner implements Constants {
 					char c = (char) data;
 					tokenString = tokenString + c;
 					
-					if( c == ' ' ) {
-						System.out.println( c + " is a space" );
-						tokenString = tokenString.trim();
-						System.out.println( "tokenString: " + tokenString );
-						
-						newList.add( stringToToken( tokenString ) );
-						
-						tokenString = "";
-					} else if( c == ';' ) {
-						tokenString = tokenString.substring( 0, tokenString.length() - 1 );
-						System.out.println( c + " is a semicolon" );
-						newList.add( stringToToken( tokenString ) );
-						tokenString = "" + c;
-						newList.add( stringToToken( tokenString ) );
+					if( !ignoreComment ) {
+						switch( c ) {
+							case ' ':
+							case '\t': {
+								System.out.println( c + " is a space" );
+								tokenString = tokenString.trim();
+								
+								if( !tokenString.isEmpty() ) {
+									System.out.println( "tokenString: " + tokenString );
+									newList.add( stringToToken( tokenString ) );
+									tokenString = "";
+								}
+								break;
+							}
+							case ';': {
+								tokenString = tokenString.substring( 0, tokenString.length() - 1 );
+								System.out.println( c + " is a semicolon" );
+								newList.add( stringToToken( tokenString ) );
+								tokenString = "" + c;
+								newList.add( stringToToken( tokenString ) );
+								tokenString = "";
+								break;
+							}
+							case '[': {
+								System.out.println( c + " is a left square bracket" );
+								if( !tokenString.equals( "[" ) ) {
+									newList.add( stringToToken( tokenString.substring( 0, tokenString.length() - 1 ) ) );
+									tokenString = "[";
+								}
+								newList.add( stringToToken( tokenString ) );
+								tokenString = "";
+								break;
+							}
+							case '(': {
+								System.out.println( c + " is a left parenthesis" );
+								if( !tokenString.equals( "(" ) ) {
+									newList.add( stringToToken( tokenString.substring( 0, tokenString.length() - 1 ) ) );
+									tokenString = "(";
+								}
+								newList.add( stringToToken( tokenString ) );
+								tokenString = "";
+								break;
+							}
+							case ')': {
+								System.out.println( c + " is a right parenthesis" );
+								if( !tokenString.equals( ")" ) ) {
+									newList.add( stringToToken( tokenString.substring( 0, tokenString.length() - 1 ) ) );
+									tokenString = ")";
+								}
+								newList.add( stringToToken( tokenString ) );
+								tokenString = "";
+								break;
+							}
+							case ',': {
+								System.out.println( c + " is a comma" );
+								if( !tokenString.equals( "," ) ) {
+									newList.add( stringToToken( tokenString.substring( 0, tokenString.length() - 1 ) ) );
+									tokenString = ",";
+								}
+								newList.add( stringToToken( tokenString ) );
+								tokenString = "";
+								break;
+							}
+							case '=': {
+								System.out.println( c + " is an equals sign" );
+								if( !tokenString.equals( "=" ) ) {
+									newList.add( stringToToken( tokenString.substring( 0, tokenString.length() - 1 ) ) );
+									tokenString = "=";
+								}
+								newList.add( stringToToken( tokenString ) );
+								tokenString = "";
+								break;
+							}
+							case '*': {
+								if( tokenString.equals( "/*" ) ) {
+									ignoreComment = true;
+								}
+							}
+						}
+					} else if( tokenString.endsWith("*/") ) {
+						ignoreComment = false;
 						tokenString = "";
 					}
 					
 					data = lineReader.read();
 				}
 				
-				System.out.println( "tokenString: " + tokenString );
-				
-				tokenString = "";
+				if( !tokenString.isEmpty() ) {
+					System.out.println( "tokenString: " + tokenString );
+					newList.add( stringToToken( tokenString ) );
+					tokenString = "";
+				}
 				
 			} catch( IOException e ) {
 				return;
@@ -207,9 +290,16 @@ public class Scanner implements Constants {
 	public Token getToken() {
 		Token result = null;
 		try {
-			result = tokens.get( currentLine ).get( positionInLine );
+			ArrayList<Token> tokenLine = tokens.get( currentLine );
+			
+			while( positionInLine >= tokenLine.size() ) {
+				positionInLine = 0;
+				currentLine++;
+				tokenLine = tokens.get( currentLine );
+			}
+			result = tokenLine.get( positionInLine );
 			positionInLine++;
-			if( positionInLine >= tokens.get( currentLine ).size() ) {
+			if( positionInLine >= tokenLine.size() ) {
 				positionInLine = 0;
 				currentLine++;
 			}

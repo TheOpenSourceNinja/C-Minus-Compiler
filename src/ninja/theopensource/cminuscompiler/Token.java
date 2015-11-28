@@ -1,4 +1,4 @@
-package ninja.theopensource.compiler;
+package ninja.theopensource.cminuscompiler;
 
 public class Token implements Constants {
 	public int type;

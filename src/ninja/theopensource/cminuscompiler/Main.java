@@ -1,4 +1,4 @@
-package ninja.theopensource.compiler;
+package ninja.theopensource.cminuscompiler;
 
 import java.io.File;
 
