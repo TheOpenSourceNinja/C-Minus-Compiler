@@ -15,13 +15,14 @@ public class Scanner implements Constants {
 	private ArrayList< ArrayList< Token > > tokens;
 	
 	private Token stringToToken( String tokenString ) {
-		Token result = new Token( ERROR, "" );
+		Token result = new Token( ERROR, "error" );
 		
 		if( tokenString.matches( "[0-9]+[.]?[0-9]*$" ) ) { //if it's a number
 			result = new Token( NUMBER, tokenString );
 		} else {
 			switch( tokenString ) {
 				case "": {
+					result = null;
 					break;
 				}
 				case "else": {
@@ -137,7 +138,6 @@ public class Scanner implements Constants {
 					break;
 				}
 				default: {
-					System.out.println( "Default case reached" );
 					result = new Token( ID, tokenString );
 					break;
 				}
@@ -188,11 +188,9 @@ public class Scanner implements Constants {
 						switch( c ) {
 							case ' ':
 							case '\t': {
-								System.out.println( c + " is a space" );
 								tokenString = tokenString.trim();
 								
 								if( !tokenString.isEmpty() ) {
-									System.out.println( "tokenString: " + tokenString );
 									newList.add( stringToToken( tokenString ) );
 									tokenString = "";
 								}
@@ -200,15 +198,17 @@ public class Scanner implements Constants {
 							}
 							case ';': {
 								tokenString = tokenString.substring( 0, tokenString.length() - 1 );
-								System.out.println( c + " is a semicolon" );
-								newList.add( stringToToken( tokenString ) );
+								if( !tokenString.isEmpty() ) {
+									newList.add( stringToToken( tokenString ) );
+								} else {
+									//System.out.println( "tokenString is empty" );
+								}
 								tokenString = "" + c;
 								newList.add( stringToToken( tokenString ) );
 								tokenString = "";
 								break;
 							}
 							case '[': {
-								System.out.println( c + " is a left square bracket" );
 								if( !tokenString.equals( "[" ) ) {
 									newList.add( stringToToken( tokenString.substring( 0, tokenString.length() - 1 ) ) );
 									tokenString = "[";
@@ -218,7 +218,6 @@ public class Scanner implements Constants {
 								break;
 							}
 							case '(': {
-								System.out.println( c + " is a left parenthesis" );
 								if( !tokenString.equals( "(" ) ) {
 									newList.add( stringToToken( tokenString.substring( 0, tokenString.length() - 1 ) ) );
 									tokenString = "(";
@@ -228,7 +227,6 @@ public class Scanner implements Constants {
 								break;
 							}
 							case ')': {
-								System.out.println( c + " is a right parenthesis" );
 								if( !tokenString.equals( ")" ) ) {
 									newList.add( stringToToken( tokenString.substring( 0, tokenString.length() - 1 ) ) );
 									tokenString = ")";
@@ -238,7 +236,6 @@ public class Scanner implements Constants {
 								break;
 							}
 							case ',': {
-								System.out.println( c + " is a comma" );
 								if( !tokenString.equals( "," ) ) {
 									newList.add( stringToToken( tokenString.substring( 0, tokenString.length() - 1 ) ) );
 									tokenString = ",";
@@ -248,7 +245,6 @@ public class Scanner implements Constants {
 								break;
 							}
 							case '=': {
-								System.out.println( c + " is an equals sign" );
 								if( !tokenString.equals( "=" ) ) {
 									newList.add( stringToToken( tokenString.substring( 0, tokenString.length() - 1 ) ) );
 									tokenString = "=";
@@ -272,7 +268,6 @@ public class Scanner implements Constants {
 				}
 				
 				if( !tokenString.isEmpty() ) {
-					System.out.println( "tokenString: " + tokenString );
 					newList.add( stringToToken( tokenString ) );
 					tokenString = "";
 				}
