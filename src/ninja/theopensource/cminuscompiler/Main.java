@@ -9,6 +9,178 @@ public class Main implements Constants {
 	
 	private Scanner scan;
 	
+	private String intToString( int i ) {
+		switch( i ) {
+			case 0: {
+				return "EOF";
+			}
+			case 1: {
+				return "ERROR";
+			}
+			case 2: {
+				return "ELSE";
+			}
+			case 3: {
+				return "IF";
+			}
+			case 4: {
+				return "INT";
+			}
+			case 5: {
+				return "RETURN";
+			}
+			case 6: {
+				return "VOID";
+			}
+			case 7: {
+				return "WHILE";
+			}
+			case 8: {
+				return "PLUS";
+			}
+			case 9: {
+				return "MINUS";
+			}
+			case 10: {
+				return "MULT";
+			}
+			case 11: {
+				return "DIV";
+			}
+			case 12: {
+				return "LS";
+			}
+			case 13: {
+				return "LEQ";
+			}
+			case 14: {
+				return "GT";
+			}
+			case 15: {
+				return "GEQ";
+			}
+			case 16: {
+				return "EQ";
+			}
+			case 17: {
+				return "NEQ";
+			}
+			case 18: {
+				return "ASSIGN";
+			}
+			case 19: {
+				return "SEMI";
+			}
+			case 20: {
+				return "COMMA";
+			}
+			case 21: {
+				return "LPAREN";
+			}
+			case 22: {
+				return "RPAREN";
+			}
+			case 23: {
+				return "LBRACKET";
+			}
+			case 24: {
+				return "RBRACKET";
+			}
+			case 25: {
+				return "LBRACE";
+			}
+			case 26: {
+				return "RBRACE";
+			}
+			case 27: {
+				return "START_COMMENT";
+			}
+			case 28: {
+				return "STOP_COMMENT";
+			}
+			case 30: {
+				return "READ";
+			}
+			case 31: {
+				return "WRITE";
+			}
+			case 32: {
+				return "NUMBER";
+			}
+			case 33: {
+				return "ID";
+			}
+			case 40: {
+				return "PROGRAM";
+			}
+			case 41: {
+				return "DECLARATION";
+			}
+			case 42: {
+				return "VARIABLE";
+			}
+			case 43: {
+				return "ARRAY";
+			}
+			case 44: {
+				return "FUNCTION";
+			}
+			case 45: {
+				return "EXPRESSION";
+			}
+			case 46: {
+				return "CALL";
+			}
+			case 47: {
+				return "COMPOUND";
+			}
+			case 48: {
+				return "TYPE_SPECIFIER";
+			}
+			case 49: {
+				return "PARAMETER_LIST";
+			}
+			case 50: {
+				return "PARAMETER";
+			}
+			case 51: {
+				return "STATEMENT_LIST";
+			}
+			case 52: {
+				return "STATEMENT";
+			}
+			case 53: {
+				return "ARGUMENTS";
+			}
+			default: {
+				System.err.println( "There is no string for " + i );
+				System.exit( -1 );
+			}
+		}
+		return "";
+	}
+	
+	private void showTree( TreeNode root, String prefix ) {
+		String indent = "-";
+		System.out.println( prefix + "Node type: " + intToString( root.nodeType ) );
+		System.out.println( prefix + "Type specifier: " + intToString( root.typeSpecifier ) );
+		System.out.println( prefix + "sValue: " + root.sValue );
+		System.out.println( prefix + "nValue: " + root.nValue );
+		
+		System.out.println();
+		if( root.C1 != null ) {
+			System.out.println( prefix + "C1:" );
+			showTree( root.C1, prefix + indent );
+		}
+		if( root.C2 != null ) {
+			System.out.println( prefix + "C2:" );
+			showTree( root.C2, prefix + indent );
+		}
+		if( root.sibling != null ) {
+			showTree( root.sibling, prefix );
+		}
+	}
+	
 	public Main() {
 		System.out.println( "File: " );
 		java.util.Scanner javaScanner = new java.util.Scanner( System.in );
@@ -34,17 +206,14 @@ public class Main implements Constants {
 		} while( currentToken.type != EOF );
 		buildSubTree( root, allTheTokens );
 		System.out.println( "Tree built" );
+		showTree( root, "" );
 	}
 	
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) {
 		Main m = new Main(); //Escape the static! Static is a pain!
 	}
 	
-	public void findSiblings( TreeNode root, List<Token> tokens ) {
-		System.out.println( "In function findSiblings" );
+	private void findSiblings( TreeNode root, List<Token> tokens ) {
 		while( !tokens.isEmpty() ) {
 			//try to identify the type of tree node represented by these tokens
 			TreeNode node = new TreeNode();
@@ -61,8 +230,11 @@ public class Main implements Constants {
 				case SEMI: {
 					break;
 				}
-				case VOID:
 				case INT: {
+					node.nodeType = VARIABLE;
+					node.typeSpecifier = INT;
+				}
+				case VOID: {
 					node.typeSpecifier = start.type;
 					Token second = tokens.get( 0 );
 					tokens = tokens.subList( 1, tokens.size() );
@@ -87,7 +259,7 @@ public class Main implements Constants {
 											}
 											default: {
 												System.err.println( "Unhandled fourth.type: " + fourth.type );
-												System.exit(-1);
+												System.exit( -1 );
 											}
 										}
 										
@@ -179,9 +351,7 @@ public class Main implements Constants {
 		}
 	}
 	
-	public void findArguments( TreeNode root, List<Token> tokens ) {
-		System.out.println( "In function findArguments" );
-		System.out.println( tokens );
+	private void findArguments( TreeNode root, List<Token> tokens ) {
 		
 		while( !tokens.isEmpty() ) {
 			TreeNode node = new TreeNode();
@@ -191,9 +361,9 @@ public class Main implements Constants {
 			
 			switch( start.type ) {
 				case NUMBER: {
-					System.out.println( tokens );
 					if( tokens.isEmpty() ) {
 						node.nodeType = NUMBER;
+						node.typeSpecifier = INT;
 						node.nValue = Integer.parseInt( start.value );
 					} else {
 						Token second = tokens.get( 0 );
@@ -202,6 +372,7 @@ public class Main implements Constants {
 						switch( second.type ) {
 							case COMMA: {
 								node.nodeType = NUMBER;
+								node.typeSpecifier = INT;
 								node.nValue = Integer.parseInt( start.value );
 								break;
 							}
@@ -246,9 +417,7 @@ public class Main implements Constants {
 		}
 	}
 	
-	public void findExpression( Token start, TreeNode root, List<Token> tokens ) {
-		System.out.println( "In function findExpression" );
-		System.out.println( tokens );
+	private void findExpression( Token start, TreeNode root, List<Token> tokens ) {
 		while( !tokens.isEmpty() ) {
 			
 			if( start == null ) {
@@ -265,6 +434,7 @@ public class Main implements Constants {
 			switch( start.type ) {
 				case NUMBER: {
 					node.C1.nodeType = NUMBER;
+					node.C1.typeSpecifier = INT;
 					node.C1.nValue = Integer.parseInt( start.value );
 					break;
 				}
@@ -275,7 +445,6 @@ public class Main implements Constants {
 						tokens = tokens.subList( 1, tokens.size() );
 						switch( first.type ) {
 							case LBRACKET: {
-								System.out.println( tokens );
 								node.C1.nodeType = ARRAY;
 								
 								Token second = tokens.get( 0 );
@@ -294,6 +463,7 @@ public class Main implements Constants {
 										}
 										
 										findExpression( second, node.C1, tokens.subList( 1, index ) );
+										node.C1 = node.C1.sibling;
 										tokens = tokens.subList( index, tokens.size() );
 										break;
 									}
@@ -306,7 +476,6 @@ public class Main implements Constants {
 								break;
 							}
 							case MINUS: {
-								System.out.println( tokens );
 								node.nodeType = MINUS;
 								node.C2 = new TreeNode();
 								
@@ -316,6 +485,8 @@ public class Main implements Constants {
 								}
 								findExpression( null, node.C2, tokens );
 								tokens = tokens.subList( index,  tokens.size() );
+								
+								node.C2 = node.C2.sibling;
 								
 								break;
 							}
@@ -328,6 +499,7 @@ public class Main implements Constants {
 								}
 								findExpression( null, node.C2, tokens );
 								tokens = tokens.subList( index, tokens.size() );
+								node.C2 = node.C2.sibling;
 								break;
 							}
 							case ASSIGN: {
@@ -336,10 +508,10 @@ public class Main implements Constants {
 								
 								switch( second.type ) {
 									case NUMBER: {
-										System.out.println( tokens );
 										node.nodeType = ASSIGN;
 										node.C2 = new TreeNode();
 										node.C2.nodeType = NUMBER;
+										node.C2.typeSpecifier = INT;
 										node.C2.nValue = Integer.parseInt( second.value );
 										break;
 									}
@@ -355,7 +527,6 @@ public class Main implements Constants {
 											
 											switch( third.type ) {
 												case LPAREN: { //It's a function call
-													System.out.println( tokens );
 													node.C2.nodeType = CALL;
 													node.C2.sValue = second.value;
 													node.C2.typeSpecifier = INT; //TODO: Find the real return type of the function.
@@ -383,11 +554,11 @@ public class Main implements Constants {
 													int bracketIndex = tokens.indexOf( new Token( RBRACKET, "]" ) );
 													
 													findExpression( null, node.C2.C1, tokens.subList( 0, bracketIndex ) );
+													node.C2.C1 = node.C2.C1.sibling;
 													tokens = tokens.subList( bracketIndex + 1, tokens.size() );
 													break;
 												}
 												case PLUS: {
-													System.out.println( tokens );
 													node.C2.nodeType = PLUS;
 													node.C2.C1 = node;
 													TreeNode temp = node.C2;
@@ -454,10 +625,8 @@ public class Main implements Constants {
 		}
 	}
 	
-	public void findStatementListSiblings( TreeNode root, List<Token> tokens ) {
-		System.out.println( "In function findStatementListSiblings" );
+	private void findStatementListSiblings( TreeNode root, List<Token> tokens ) {
 		while( !tokens.isEmpty() ) {
-			System.out.println( tokens );
 			
 			TreeNode node = new TreeNode();
 			Token start = tokens.get( 0 );
@@ -465,21 +634,18 @@ public class Main implements Constants {
 			
 			switch( start.type ) {
 				case WRITE: {
-					System.out.println( tokens );
 					node.nodeType = WRITE;
 					
 					int endParen = tokens.indexOf( new Token( RPAREN, ")" ) );
 					node.C1 = new TreeNode();
 					node.C1.nodeType = EXPRESSION;
 					
-					System.out.println( tokens.subList( 1, endParen ) );
 					findExpression( null, node.C1, tokens.subList( 1, endParen ) );
 					tokens = tokens.subList( endParen + 1, tokens.size() );
 					
 					break;
 				}
 				case READ: {
-					System.out.println( tokens );
 					node.nodeType = READ;
 					
 					Token second = tokens.get( 0 );
@@ -531,11 +697,7 @@ public class Main implements Constants {
 						newTokenList.add( tokens.get( i ) );
 					}
 					
-					System.out.println( tokens );
-					System.out.println( newTokenList );
-					
 					node.nodeType = COMPOUND;
-					System.out.println( newTokenList );
 					{
 						int endOfBlock = newTokenList.indexOf( new Token( RBRACE, "}" ) );
 						if( endOfBlock == -1 ) {
@@ -549,17 +711,18 @@ public class Main implements Constants {
 					break;
 				}
 				case RETURN: {
-					System.out.println( tokens );
+					node.nodeType = RETURN;
 					node.C1 = new TreeNode();
 					
 					int tokenIndex = tokens.indexOf( new Token( SEMI, ";" ) );
 					findExpression( null, node.C1, tokens.subList( 0, tokenIndex ) );
 					tokens = tokens.subList( tokenIndex + 1, tokens.size() );
+					node.C1 = node.C1.sibling;
 					
 					break;
 				}
 				case IF: {
-					System.out.println( tokens );
+					node.nodeType = IF;
 					node.C1 = new TreeNode();
 					
 					{
@@ -567,10 +730,10 @@ public class Main implements Constants {
 						findExpression( null, node.C1, tokens.subList( 1, tokenIndex ) );
 						tokens = tokens.subList( tokenIndex + 1,  tokens.size() );
 					}
+					node.C1 = node.C1.sibling;
 					
 					node.C2 = new TreeNode();
 					node.C2.nodeType = COMPOUND;
-					System.out.println( tokens );
 					{
 						int endOfBlock = tokens.indexOf( new Token( RBRACE, "}" ) );
 						if( endOfBlock == -1 ) {
@@ -581,7 +744,6 @@ public class Main implements Constants {
 					
 					node.C3 = new TreeNode();
 					node.C3.nodeType = COMPOUND;
-					System.out.println( tokens );
 					{
 						int endOfBlock = tokens.indexOf( new Token( RBRACE, "}" ) );
 						buildSubTree( node.C3, tokens.subList( 1, endOfBlock ) );
@@ -594,17 +756,32 @@ public class Main implements Constants {
 					tokens = tokens.subList( 0, tokens.size() );
 					
 					switch( second.type ) {
-						case LBRACKET:
-						case ASSIGN: {
+						case LBRACKET: {
+							node.nodeType = EXPRESSION; //TODO: What node type to use here?
 							int tokenIndex = tokens.indexOf( new Token( SEMI, ";" ) );
 							findExpression( start, node, tokens.subList( 0, tokenIndex ) );
 							tokens = tokens.subList( tokenIndex + 1, tokens.size() );
 							break;
 						}
+						case ASSIGN: {
+							node.nodeType = ASSIGN;
+							
+							node.C1 = new TreeNode();
+							node.C1.nodeType = VARIABLE;
+							node.C1.sValue = start.value;
+							
+							node.C2 = new TreeNode();
+							
+							int tokenIndex = tokens.indexOf( new Token( SEMI, ";" ) );
+							findExpression( start, node.C2, tokens.subList( 0, tokenIndex ) );
+							tokens = tokens.subList( tokenIndex + 1, tokens.size() );
+							
+							node.C2 = node.C2.sibling;
+							break;
+						}
 						case LPAREN: { //It's a function call
 							tokens = tokens.subList( 1, tokens.size() );
 							
-							System.out.println( tokens );
 							node.nodeType = CALL;
 							node.sValue = start.value;
 							node.typeSpecifier = INT; //TODO: Find the real return type of the function.
@@ -629,12 +806,13 @@ public class Main implements Constants {
 					break;
 				}
 				case CALL: {
-					System.out.println( tokens );
+					node.nodeType = CALL;
 					break;
 				}
 				case WHILE: {
-					System.out.println( tokens );
+					node.nodeType = WHILE;
 					node.C1 = new TreeNode();
+					node.C1.nodeType = EXPRESSION;
 					
 					{
 						int tokenIndex = tokens.indexOf( new Token( RPAREN, ")" ) );
@@ -642,9 +820,10 @@ public class Main implements Constants {
 						tokens = tokens.subList( tokenIndex + 1,  tokens.size() );
 					}
 					
+					node.C1 = node.C1.sibling;
+					
 					node.C2 = new TreeNode();
 					node.C2.nodeType = STATEMENT_LIST;
-					System.out.println( tokens );
 					{
 						int startOfCompound = tokens.indexOf( new Token( LBRACE, "{") );
 						int endOfCompound;// = tokens.lastIndexOf( new Token( RBRACE, "}" ) );
@@ -676,9 +855,6 @@ public class Main implements Constants {
 						}
 						
 						buildSubTree( node.C2, tokens.subList( startOfCompound, endOfCompound ) );
-						System.out.println( tokens.subList( startOfCompound, endOfCompound ) );
-						System.out.println( tokens );
-						System.out.println( tokens.subList( endOfCompound + 1, tokens.size() ) );
 						tokens = tokens.subList( endOfCompound + 1, tokens.size() );
 					}
 					break;
@@ -698,15 +874,13 @@ public class Main implements Constants {
 		}
 	}
 	
-	public void buildSubTree( TreeNode root, List<Token> tokens ) {
-		System.out.println( "In function buildSubTree" );
+	private void buildSubTree( TreeNode root, List<Token> tokens ) {
 		switch( root.nodeType ) {
 			case PROGRAM: {
 				findSiblings( root, tokens );
 				break;
 			}
 			case PARAMETER_LIST: {
-				System.out.println( tokens );
 				
 				TreeNode node = new TreeNode();
 				
