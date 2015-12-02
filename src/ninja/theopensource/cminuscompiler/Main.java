@@ -2,12 +2,11 @@ package ninja.theopensource.cminuscompiler;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class Main implements Constants {
 	
-	private Scanner scan;
+	private TreeNode realRoot; //Would have called this root, but I'm adding it after writing a bunch of functions that use the name "root" for their arguments.
 	
 	private String intToString( int i ) {
 		switch( i ) {
@@ -181,11 +180,18 @@ public class Main implements Constants {
 		}
 	}
 	
-	public Main() {
-		System.out.println( "File: " );
-		java.util.Scanner javaScanner = new java.util.Scanner( System.in );
-		String fileName = javaScanner.next();
-		javaScanner.close();
+	public Main( String[] args ) {
+		String fileName;
+		
+		if( args.length == 0 ) {
+			System.out.println( "File: " );
+			java.util.Scanner javaScanner = new java.util.Scanner( System.in );
+			fileName = javaScanner.next();
+			javaScanner.close();
+		} else {
+			fileName = args[ 0 ];
+		}
+		
 		
 		File file = new File( fileName );
 		if( !file.exists() || !file.canRead() ) {
@@ -193,10 +199,7 @@ public class Main implements Constants {
 			return;
 		}
 		
-		scan = new Scanner( file );
-		
-		TreeNode root = new TreeNode();
-		root.nodeType = PROGRAM;
+		Scanner scan = new Scanner( file );
 		
 		Token currentToken = new Token( EOF );
 		ArrayList<Token> allTheTokens = new ArrayList<Token>();
@@ -204,13 +207,21 @@ public class Main implements Constants {
 			currentToken = scan.getToken();
 			allTheTokens.add( currentToken );
 		} while( currentToken.type != EOF );
-		buildSubTree( root, allTheTokens );
-		System.out.println( "Tree built" );
-		showTree( root, "" );
+		
+		realRoot = new TreeNode();
+		realRoot.nodeType = PROGRAM;
+		buildSubTree( realRoot, allTheTokens );
+		
+		//showTree( realRoot, "" ); //TODO: Commented out so I can focus on the checker. Uncomment before turning in.
+		
+		Checker c = new Checker();
+		c.check( realRoot );
+		c.print();
 	}
 	
 	public static void main(String[] args) {
-		Main m = new Main(); //Escape the static! Static is a pain!
+		@SuppressWarnings("unused")
+		Main m = new Main( args ); //Escape the static! Static is a pain!
 	}
 	
 	private void findSiblings( TreeNode root, List<Token> tokens ) {
@@ -236,106 +247,114 @@ public class Main implements Constants {
 				}
 				case VOID: {
 					node.typeSpecifier = start.type;
-					Token second = tokens.get( 0 );
-					tokens = tokens.subList( 1, tokens.size() );
-					switch( second.type ) {
-						case ID: {
-							node.sValue = second.value;
-							if( !tokens.isEmpty() ) {
-								Token third = tokens.get( 0 );
-								tokens = tokens.subList( 1, tokens.size() );
-								switch( third.type ) {
-									case LBRACKET: { //We're declaring an array
-										node.nodeType = ARRAY;
-										Token fourth = tokens.get( 0 );
-										tokens = tokens.subList( 1, tokens.size() );
-										switch( fourth.type ) {
-											case NUMBER: {
-												node.nValue = Integer.parseInt( fourth.value );
-												break;
-											}
-											case RBRACKET: {
-												break;
-											}
-											default: {
-												System.err.println( "Unhandled fourth.type: " + fourth.type );
-												System.exit( -1 );
-											}
-										}
-										
-										root.sibling = node;
-										root = node; //Don't want to accidentally replace sibling
-										break;
-									}
-									case LPAREN: { //We're declaring a function
-										node.nodeType = FUNCTION;
-										
-										node.C1 = new TreeNode();
-										node.C1.nodeType = PARAMETER_LIST;
-										int endOfParameterList = tokens.indexOf( new Token( RPAREN, ")" ) );
-										buildSubTree( node.C1, tokens.subList(0, endOfParameterList ) );
-										tokens = tokens.subList( endOfParameterList + 1, tokens.size() );
-										
-										node.C2 = new TreeNode();
-										node.C2.nodeType = COMPOUND;
-										int startOfCompound = tokens.indexOf( new Token( LBRACE, "{") );
-										int endOfCompound;// = tokens.lastIndexOf( new Token( RBRACE, "}" ) );
-										
-										//Find endOfCompound: Find the *matching* }
-										{
-											int numberOfStarters = 1; //Number of {: when it matches the number of }, we're done
-											int numberOfEnders = 0;
-											int index = startOfCompound;
-											do {
-												index += 1;
-												Token t = tokens.get( index );
-												switch( t.type ) {
-													case LBRACE: {
-														numberOfStarters += 1;
-														break;
-													}
-													case RBRACE: {
-														numberOfEnders += 1;
-														break;
-													}
-													default: {
-														break;
-													}
+					if( !tokens.isEmpty() ) {
+						Token second = tokens.get( 0 );
+						tokens = tokens.subList( 1, tokens.size() );
+						switch( second.type ) {
+							case ID: {
+								node.sValue = second.value;
+								if( !tokens.isEmpty() ) {
+									Token third = tokens.get( 0 );
+									tokens = tokens.subList( 1, tokens.size() );
+									switch( third.type ) {
+										case LBRACKET: { //We're declaring an array
+											node.nodeType = ARRAY;
+											Token fourth = tokens.get( 0 );
+											tokens = tokens.subList( 1, tokens.size() );
+											switch( fourth.type ) {
+												case NUMBER: {
+													node.nValue = Integer.parseInt( fourth.value );
+													break;
 												}
-											} while( numberOfStarters != numberOfEnders );
-											endOfCompound = index;
-											startOfCompound += 1; //We don't need to include the {
+												case RBRACKET: {
+													break;
+												}
+												default: {
+													System.err.println( "Unhandled fourth.type: " + fourth.type );
+													System.exit( -1 );
+												}
+											}
+											
+											root.sibling = node;
+											root = node; //Don't want to accidentally replace sibling
+											break;
 										}
-										
-										buildSubTree( node.C2, tokens.subList(startOfCompound, endOfCompound ) );
-										tokens = tokens.subList( endOfCompound + 1, tokens.size() );
-										
-										root.sibling = node;
-										root = node; //Don't want to accidentally replace sibling
-										break;
+										case LPAREN: { //We're declaring a function
+											node.nodeType = FUNCTION;
+											
+											node.C1 = new TreeNode();
+											node.C1.nodeType = PARAMETER_LIST;
+											int endOfParameterList = tokens.indexOf( new Token( RPAREN, ")" ) );
+											
+											if( endOfParameterList == -1 ) {
+												node.C1.typeSpecifier = VOID;
+											} else {
+												node.C1.typeSpecifier = INT;
+												buildSubTree( node.C1, tokens.subList(0, endOfParameterList ) );
+												tokens = tokens.subList( endOfParameterList + 1, tokens.size() );
+											}
+											
+											node.C2 = new TreeNode();
+											node.C2.nodeType = COMPOUND;
+											int startOfCompound = tokens.indexOf( new Token( LBRACE, "{") );
+											int endOfCompound;// = tokens.lastIndexOf( new Token( RBRACE, "}" ) );
+											
+											//Find endOfCompound: Find the *matching* }
+											{
+												int numberOfStarters = 1; //Number of {: when it matches the number of }, we're done
+												int numberOfEnders = 0;
+												int index = startOfCompound;
+												do {
+													index += 1;
+													Token t = tokens.get( index );
+													switch( t.type ) {
+														case LBRACE: {
+															numberOfStarters += 1;
+															break;
+														}
+														case RBRACE: {
+															numberOfEnders += 1;
+															break;
+														}
+														default: {
+															break;
+														}
+													}
+												} while( numberOfStarters != numberOfEnders );
+												endOfCompound = index;
+												startOfCompound += 1; //We don't need to include the {
+											}
+											
+											buildSubTree( node.C2, tokens.subList(startOfCompound, endOfCompound ) );
+											tokens = tokens.subList( endOfCompound + 1, tokens.size() );
+											
+											root.sibling = node;
+											root = node; //Don't want to accidentally replace sibling
+											break;
+										}
+										case RPAREN:
+										case COMMA:
+										case SEMI: { //We're declaring a variable
+											
+											root.sibling = node;
+											root = node; //Don't want to accidentally replace sibling
+											break;
+										}
+										default: {
+											System.err.println( "Unhandled third.type: " + third.type );
+											System.exit(-1);
+										}
 									}
-									case RPAREN:
-									case COMMA:
-									case SEMI: { //We're declaring a variable
-										
-										root.sibling = node;
-										root = node; //Don't want to accidentally replace sibling
-										break;
-									}
-									default: {
-										System.err.println( "Unhandled third.type: " + third.type );
-										System.exit(-1);
-									}
+								} else {
+									root.sibling = node;
+									root = node; //Don't want to accidentally replace sibling
 								}
-							} else {
-								root.sibling = node;
-								root = node; //Don't want to accidentally replace sibling
+								break;
 							}
-							break;
-						}
-						default: {
-							System.err.println( "Unhandled second.type: " + second.type );
-							System.exit(-1);
+							default: {
+								System.err.println( "Unhandled second.type: " + second.type );
+								System.exit(-1);
+							}
 						}
 					}
 					break;
@@ -882,17 +901,20 @@ public class Main implements Constants {
 			}
 			case PARAMETER_LIST: {
 				
-				TreeNode node = new TreeNode();
+				TreeNode node = root;
 				
-				Token start = tokens.get( 0 );
-				switch( start.type ) {
+				switch( node.typeSpecifier ) {
 					case VOID: {
-						node.typeSpecifier = VOID;
+						//node.typeSpecifier = VOID;
+						break;
+					}
+					case INT: {
+						findSiblings( node, tokens );
 						break;
 					}
 					default: {
-						findSiblings( node, tokens );
-						break;
+						System.err.println( "Unhandled node.typeSpecifier: " + node.typeSpecifier );
+						System.exit( -1 );
 					}
 				}
 				break;
