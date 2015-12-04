@@ -11,6 +11,6 @@ public class Symbol {
 	public String rename; //Each variable is given a unique name
 	
 	public String toString() {
-		return "ID: " + ID + " dataType: " + dataType + " blockLevel: " + blockLevel + " returnType: " + returnType + " arrayMax: " + arrayMax + " Rename: " + rename + "\n";
+		return "ID: " + ID + " dataType: " + Main.intToString( dataType ) + " blockLevel: " + blockLevel + " returnType: " + Main.intToString( returnType ) + " arrayMax: " + arrayMax + " Rename: " + rename + "\n";
 	}
 }

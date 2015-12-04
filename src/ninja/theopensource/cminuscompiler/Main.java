@@ -1,6 +1,7 @@
 package ninja.theopensource.cminuscompiler;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,7 +9,7 @@ public class Main implements Constants {
 	
 	private TreeNode realRoot; //Would have called this root, but I'm adding it after writing a bunch of functions that use the name "root" for their arguments.
 	
-	private String intToString( int i ) {
+	public static String intToString( int i ) {
 		switch( i ) {
 			case 0: {
 				return "EOF";
@@ -165,6 +166,7 @@ public class Main implements Constants {
 		System.out.println( prefix + "Type specifier: " + intToString( root.typeSpecifier ) );
 		System.out.println( prefix + "sValue: " + root.sValue );
 		System.out.println( prefix + "nValue: " + root.nValue );
+		System.out.println( prefix + "rename: " + root.rename );
 		
 		System.out.println();
 		if( root.C1 != null ) {
@@ -196,7 +198,7 @@ public class Main implements Constants {
 		File file = new File( fileName );
 		if( !file.exists() || !file.canRead() ) {
 			System.err.println( "Error: File unreadable" );
-			return;
+			System.exit( -1 );
 		}
 		
 		Scanner scan = new Scanner( file );
@@ -208,15 +210,39 @@ public class Main implements Constants {
 			allTheTokens.add( currentToken );
 		} while( currentToken.type != EOF );
 		
+		System.out.print( "Tokens (Phase 1): " );
+		System.out.println( allTheTokens ); //TODO: Commented out. Uncomment before turning in.
+		
 		realRoot = new TreeNode();
 		realRoot.nodeType = PROGRAM;
 		buildSubTree( realRoot, allTheTokens );
 		
-		//showTree( realRoot, "" ); //TODO: Commented out so I can focus on the checker. Uncomment before turning in.
+		System.out.println( "Tree (Phase 2): " );
+		showTree( realRoot, "" ); //TODO: Commented out so I can focus on the checker. Uncomment before turning in.
 		
 		Checker c = new Checker();
 		c.check( realRoot );
-		c.print();
+		
+		System.out.println( "Symbol table (Phase 3): " );
+		c.print(); //TODO: Commented out so I can focus on the code generator. Uncomment before turning in.
+		
+		String outputFileName = fileName + ".asm";
+		File output = new File( outputFileName );
+		try {
+			output.createNewFile();
+			if( !file.canWrite() ) {
+				System.err.println( "Error: Output file unwritable" );
+				System.exit( -1 );
+			}
+		} catch( IOException e ) {
+			System.err.println( e.getLocalizedMessage() );
+		}
+		
+		System.out.println( "Generating code (Phase 4)..." );
+		CodeGen generator = new CodeGen( realRoot, output );
+		generator.genCode( realRoot );
+		generator.closeFile();
+		System.out.println( "Done. The generated code is in the file " + outputFileName );
 	}
 	
 	public static void main(String[] args) {
@@ -405,7 +431,7 @@ public class Main implements Constants {
 				}
 				case ID: {
 					if( tokens.isEmpty() ) {
-						node.nodeType = VARIABLE;
+						node.nodeType = VARIABLE; //TODO: How can we not assume it's a variable? Might be an array.
 						node.sValue = start.value;
 					} else {
 						Token second = tokens.get( 0 );

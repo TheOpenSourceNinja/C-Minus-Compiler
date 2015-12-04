@@ -254,7 +254,7 @@ public class Scanner implements Constants {
 								break;
 							}
 							case '*': {
-								if( tokenString.equals( "/*" ) ) {
+								if( tokenString.startsWith( "/*" ) ) {
 									ignoreComment = true;
 								}
 							}
@@ -267,7 +267,7 @@ public class Scanner implements Constants {
 					data = lineReader.read();
 				}
 				
-				if( !tokenString.isEmpty() ) {
+				if( !ignoreComment && !tokenString.isEmpty() ) {
 					newList.add( stringToToken( tokenString ) );
 					tokenString = "";
 				}
